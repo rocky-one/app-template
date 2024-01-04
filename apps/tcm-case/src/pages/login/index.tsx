@@ -7,16 +7,16 @@ export default function Login(props: {
 
   const onFinish = (values: {name: string, password: string}) => {
     props.onLogin(values);
-  }
+  };
 
   return <div className={styles.login}>
     <Form
-      name='basic'
-      labelCol={{ span: 4 }}
-      wrapperCol={{ span: 10 }}
-      onFinish={onFinish}
       autoComplete='off'
+      labelCol={{ span: 4 }}
+      name='basic'
+      onFinish={onFinish}
       style={{width: '420px'}}
+      wrapperCol={{ span: 10 }}
     >
       <Form.Item
         label='用户名'
@@ -36,11 +36,10 @@ export default function Login(props: {
 
 
       <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-        <Button type='primary' htmlType='submit'>
+        <Button htmlType='submit' type='primary'>
           登录
         </Button>
       </Form.Item>
     </Form>
-    {/* <Button onClick={props.onLogin} type='primary'>登录</Button> */}
   </div>;
 }

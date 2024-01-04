@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu } from 'antd';
