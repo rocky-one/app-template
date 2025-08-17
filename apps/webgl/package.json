@@ -23,6 +23,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@kitware/vtk.js": "^32.13.0",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
@@ -36,5 +37,9 @@
     "less": "^4.2.0",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
-  }
+  },
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC"
 }

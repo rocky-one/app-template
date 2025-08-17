@@ -4,7 +4,7 @@ import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import { MethodEnum } from './types';
 
-export const BASE_URL = 'http://192.168.20.121:8086';
+export const BASE_URL = 'http://localhost:8086';
 
 class ServicesBase {
   constructor() {

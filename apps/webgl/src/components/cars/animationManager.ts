@@ -24,7 +24,7 @@ export default class AnimationManager {
     this.createDoorSprite();
     this.initOpenDoorObjs();
     this.initDoorState();
-    this.autoChangeColor();
+    // this.autoChangeColor();
     this.createDoorAudio();
     this.onEvent();
   }

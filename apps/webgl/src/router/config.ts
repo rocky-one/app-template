@@ -7,6 +7,7 @@ const AmbientLight = lazy(() => import('../pages/ambientLight'));
 const DirectionLight = lazy(() => import('../pages/directionLight'));
 const PointLight = lazy(() => import('../pages/pointLight'));
 const SpecularLight = lazy(() => import('../pages/specularLight'));
+const Vtk = lazy(() => import('../pages/vtk'));
 
 export const routesLoginLayout = [
   {
@@ -49,5 +50,10 @@ export const baseRoutes = [
     path: '/specular-light',
     element: SpecularLight,
     label: 'SpecularLight'
+  },
+  {
+    path: '/vtk',
+    element: Vtk,
+    label: 'Vtk'
   },
 ];
