@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Matrix 类详细解析</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        color: #333;
+        min-height: 100vh;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      header {
+        background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+      }
+      .description {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+      .content {
+        padding: 30px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+      @media (max-width: 900px) {
+        .content {
+          grid-template-columns: 1fr;
+        }
+      }
+      .explanation,
+      .demo {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      }
+      h2 {
+        color: #4b6cb7;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+      }
+      h3 {
+        color: #5a6268;
+        margin: 20px 0 15px 0;
+      }
+      .matrix-representation {
+        background: white;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 15px 0;
+        font-family: "Courier New", monospace;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .code-block {
+        background: #2b2b2b;
+        color: #f8f8f2;
+        border-radius: 6px;
+        padding: 16px;
+        margin: 15px 0;
+        font-family: "Consolas", "Monaco", monospace;
+        font-size: 14px;
+        overflow-x: auto;
+        line-height: 1.5;
+      }
+      .formula {
+        background: #e9ecef;
+        border-left: 4px solid #4b6cb7;
+        padding: 12px 15px;
+        margin: 15px 0;
+        border-radius: 4px;
+        font-family: "Cambria", serif;
+      }
+      .canvas-container {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 20px 0;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      }
+      #canvas {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin: 20px 0;
+      }
+      .control-group {
+        background: white;
+        border-radius: 6px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .slider-container {
+        margin-bottom: 15px;
+      }
+      .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: 500;
+      }
+      input[type="range"] {
+        width: 100%;
+      }
+      button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 6px;
+        background: #4b6cb7;
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin: 5px;
+        width: calc(50% - 10px);
+      }
+      button:hover {
+        background: #3a5999;
+      }
+      .current-matrix {
+        background: white;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 20px 0;
+        font-family: "Courier New", monospace;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .key-point {
+        background: #e6f3ff;
+        border-left: 4px solid #1890ff;
+        padding: 12px 15px;
+        margin: 15px 0;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Matrix 类详细解析</h1>
+        <p class="description">深入理解 Canvas 2D 变换矩阵的实现原理</p>
+      </header>
+
+      <div class="content">
+        <div class="explanation">
+          <h2>矩阵基础理论</h2>
+
+          <h3>变换矩阵表示</h3>
+          <p>在 Canvas 2D 上下文中，变换矩阵使用 6 个参数表示：</p>
+          <div class="matrix-representation">
+            [ a, c, e ]<br />
+            [ b, d, f ]<br />
+            [ 0, 0, 1 ]
+          </div>
+          <p>其中：</p>
+          <ul>
+            <li><strong>a, b, c, d</strong>：控制缩放、旋转和斜切</li>
+            <li><strong>e, f</strong>：控制平移（X 和 Y 方向）</li>
+          </ul>
+
+          <h3>单位矩阵</h3>
+          <p>单位矩阵是不进行任何变换的矩阵：</p>
+          <div class="matrix-representation">
+            [ 1, 0, 0 ]<br />
+            [ 0, 1, 0 ]<br />
+            [ 0, 0, 1 ]
+          </div>
+          <div class="code-block">
+            // 单位矩阵实现<br />
+            identity() {<br />
+            &nbsp;&nbsp;this.a = 1;<br />
+            &nbsp;&nbsp;this.b = 0;<br />
+            &nbsp;&nbsp;this.c = 0;<br />
+            &nbsp;&nbsp;this.d = 1;<br />
+            &nbsp;&nbsp;this.e = 0;<br />
+            &nbsp;&nbsp;this.f = 0;<br />
+            &nbsp;&nbsp;return this;<br />
+            }
+          </div>
+
+          <h3>平移变换</h3>
+          <p>平移矩阵将点 (x, y) 移动到 (x + tx, y + ty)：</p>
+          <div class="matrix-representation">
+            [ 1, 0, tx ]<br />
+            [ 0, 1, ty ]<br />
+            [ 0, 0, 1 ]
+          </div>
+          <div class="code-block">
+            // 平移实现<br />
+            translate(tx, ty) {<br />
+            &nbsp;&nbsp;// 创建平移矩阵 [1, 0, 0, 1, tx, ty]<br />
+            &nbsp;&nbsp;const translateMatrix = new Matrix(1, 0, 0, 1, tx,
+            ty);<br />
+            &nbsp;&nbsp;// 与当前矩阵相乘<br />
+            &nbsp;&nbsp;this.multiply(translateMatrix);<br />
+            &nbsp;&nbsp;return this;<br />
+            }
+          </div>
+
+          <h3>缩放变换</h3>
+          <p>缩放矩阵将点 (x, y) 缩放到 (sx * x, sy * y)：</p>
+          <div class="matrix-representation">
+            [ sx, 0, 0 ]<br />
+            [ 0, sy, 0 ]<br />
+            [ 0, 0, 1 ]
+          </div>
+          <div class="code-block">
+            // 缩放实现<br />
+            scale(sx, sy) {<br />
+            &nbsp;&nbsp;// 创建缩放矩阵 [sx, 0, 0, sy, 0, 0]<br />
+            &nbsp;&nbsp;const scaleMatrix = new Matrix(sx, 0, 0, sy, 0, 0);<br />
+            &nbsp;&nbsp;// 与当前矩阵相乘<br />
+            &nbsp;&nbsp;this.multiply(scaleMatrix);<br />
+            &nbsp;&nbsp;return this;<br />
+            }
+          </div>
+
+          <h3>矩阵乘法</h3>
+          <p>矩阵乘法用于组合多个变换：</p>
+          <div class="formula">
+            [a1, c1, e1] [a2, c2, e2] [a1*a2 + c1*b2, a1*c2 + c1*d2, a1*e2 +
+            c1*f2 + e1]<br />
+            [b1, d1, f1] × [b2, d2, f2] = [b1*a2 + d1*b2, b1*c2 + d1*d2, b1*e2 +
+            d1*f2 + f1]<br />
+            [0, 0, 1 ] [0, 0, 1 ] [0, 0, 1 ]
+          </div>
+          <div class="code-block">
+            // 矩阵乘法实现<br />
+            multiply(matrix) {<br />
+            &nbsp;&nbsp;const a = this.a;<br />
+            &nbsp;&nbsp;const b = this.b;<br />
+            &nbsp;&nbsp;const c = this.c;<br />
+            &nbsp;&nbsp;const d = this.d;<br />
+            &nbsp;&nbsp;const e = this.e;<br />
+            &nbsp;&nbsp;const f = this.f;<br />
+            <br />
+            &nbsp;&nbsp;this.a = a * matrix.a + c * matrix.b;<br />
+            &nbsp;&nbsp;this.b = b * matrix.a + d * matrix.b;<br />
+            &nbsp;&nbsp;this.c = a * matrix.c + c * matrix.d;<br />
+            &nbsp;&nbsp;this.d = b * matrix.c + d * matrix.d;<br />
+            &nbsp;&nbsp;this.e = a * matrix.e + c * matrix.f + e;<br />
+            &nbsp;&nbsp;this.f = b * matrix.e + d * matrix.f + f;<br />
+            <br />
+            &nbsp;&nbsp;return this;<br />
+            }
+          </div>
+
+          <div class="key-point">
+            <strong>重要提示：</strong
+            >变换的顺序很重要！先缩放后平移与先平移后缩放会产生不同的结果。
+          </div>
+        </div>
+
+        <div class="demo">
+          <h2>矩阵变换演示</h2>
+
+          <div class="canvas-container">
+            <canvas id="canvas" width="400" height="400"></canvas>
+          </div>
+
+          <div class="current-matrix">
+            <strong>当前变换矩阵：</strong><br />
+            a = <span id="a-value">1</span>, b = <span id="b-value">0</span>, c
+            = <span id="c-value">0</span><br />
+            d = <span id="d-value">1</span>, e = <span id="e-value">0</span>, f
+            = <span id="f-value">0</span>
+          </div>
+
+          <div class="controls">
+            <div class="control-group">
+              <h3>平移变换</h3>
+              <div class="slider-container">
+                <div class="slider-label">
+                  <span>X轴平移 (e)</span>
+                  <span id="translateX-value">0</span>
+                </div>
+                <input
+                  type="range"
+                  id="translateX"
+                  min="-200"
+                  max="200"
+                  value="0"
+                />
+              </div>
+              <div class="slider-container">
+                <div class="slider-label">
+                  <span>Y轴平移 (f)</span>
+                  <span id="translateY-value">0</span>
+                </div>
+                <input
+                  type="range"
+                  id="translateY"
+                  min="-200"
+                  max="200"
+                  value="0"
+                />
+              </div>
+            </div>
+
+            <div class="control-group">
+              <h3>缩放变换</h3>
+              <div class="slider-container">
+                <div class="slider-label">
+                  <span>X轴缩放 (a)</span>
+                  <span id="scaleX-value">1.0</span>
+                </div>
+                <input
+                  type="range"
+                  id="scaleX"
+                  min="10"
+                  max="200"
+                  value="100"
+                />
+              </div>
+              <div class="slider-container">
+                <div class="slider-label">
+                  <span>Y轴缩放 (d)</span>
+                  <span id="scaleY-value">1.0</span>
+                </div>
+                <input
+                  type="range"
+                  id="scaleY"
+                  min="10"
+                  max="200"
+                  value="100"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: center">
+            <button id="reset-btn">重置矩阵</button>
+            <button id="apply-btn">应用变换</button>
+          </div>
+
+          <h3>变换顺序说明</h3>
+          <p>在此演示中，我们使用以下变换顺序：</p>
+          <ol>
+            <li>首先应用缩放变换</li>
+            <li>然后应用平移变换</li>
+          </ol>
+          <p>这意味着：</p>
+          <div class="code-block">
+            // 变换顺序代码<br />
+            matrix<br />
+            &nbsp;&nbsp;.scale(scaleX, scaleY) // 先缩放<br />
+            &nbsp;&nbsp;.translate(tx, ty); // 后平移
+          </div>
+
+          <h3>应用到 Canvas</h3>
+          <p>将矩阵应用到 Canvas 上下文：</p>
+          <div class="code-block">
+            // 应用到 Canvas 上下文<br />
+            transformContext(ctx) {<br />
+            &nbsp;&nbsp;ctx.transform(this.a, this.b, this.c, this.d, this.e,
+            this.f);<br />
+            }
+          </div>
+          <p>这相当于调用：</p>
+          <div class="code-block">ctx.transform(a, b, c, d, e, f);</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Matrix 类实现
+      class Matrix {
+        constructor(a = 1, b = 0, c = 0, d = 1, e = 0, f = 0) {
+          // 矩阵参数
+          this.a = a; // 水平缩放
+          this.b = b; // 垂直倾斜
+          this.c = c; // 水平倾斜
+          this.d = d; // 垂直缩放
+          this.e = e; // 水平平移
+          this.f = f; // 垂直平移
+        }
+
+        // 重置为单位矩阵
+        identity() {
+          this.a = 1;
+          this.b = 0;
+          this.c = 0;
+          this.d = 1;
+          this.e = 0;
+          this.f = 0;
+          return this;
+        }
+
+        // 平移变换
+        translate(tx, ty) {
+          // 创建平移矩阵 [1, 0, 0, 1, tx, ty]
+          const translateMatrix = new Matrix(1, 0, 0, 1, tx, ty);
+          // 与当前矩阵相乘
+          this.multiply(translateMatrix);
+          return this;
+        }
+
+        // 缩放变换
+        scale(sx, sy) {
+          // 创建缩放矩阵 [sx, 0, 0, sy, 0, 0]
+          const scaleMatrix = new Matrix(sx, 0, 0, sy, 0, 0);
+          // 与当前矩阵相乘
+          this.multiply(scaleMatrix);
+          return this;
+        }
+
+        // 矩阵乘法
+        multiply(matrix) {
+          // 保存当前矩阵值
+          const a = this.a;
+          const b = this.b;
+          const c = this.c;
+          const d = this.d;
+          const e = this.e;
+          const f = this.f;
+
+          // 计算新矩阵值
+          this.a = a * matrix.a + c * matrix.b;
+          this.b = b * matrix.a + d * matrix.b;
+          this.c = a * matrix.c + c * matrix.d;
+          this.d = b * matrix.c + d * matrix.d;
+          this.e = a * matrix.e + c * matrix.f + e;
+          this.f = b * matrix.e + d * matrix.f + f;
+
+          return this;
+        }
+
+        // 应用到 Canvas 上下文
+        transformContext(ctx) {
+          ctx.transform(this.a, this.b, this.c, this.d, this.e, this.f);
+        }
+
+        // 获取矩阵字符串表示
+        toString() {
+          return `[${this.a.toFixed(2)}, ${this.c.toFixed(2)}, ${this.e.toFixed(2)}]\n[${this.b.toFixed(2)}, ${this.d.toFixed(2)}, ${this.f.toFixed(2)}]`;
+        }
+      }
+
+      // 初始化 Canvas
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const matrix = new Matrix();
+
+      // 绘制函数
+      function draw() {
+        // 清除画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 绘制坐标网格
+        drawGrid();
+
+        // 保存当前状态
+        ctx.save();
+
+        // 应用矩阵变换
+        matrix.transformContext(ctx);
+
+        // 绘制矩形
+        ctx.fillStyle = "rgba(255, 100, 100, 0.7)";
+        ctx.fillRect(-50, -50, 100, 100);
+
+        // 绘制边框
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-50, -50, 100, 100);
+
+        // 绘制中心点
+        ctx.fillStyle = "yellow";
+        ctx.beginPath();
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 恢复状态
+        ctx.restore();
+
+        // 更新矩阵显示
+        updateMatrixDisplay();
+      }
+
+      // 绘制坐标网格
+      function drawGrid() {
+        ctx.save();
+        ctx.strokeStyle = "#e0e0e0";
+        ctx.lineWidth = 1;
+
+        // 绘制网格线
+        for (let x = 0; x <= canvas.width; x += 50) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+
+        for (let y = 0; y <= canvas.height; y += 50) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+
+        // 绘制坐标轴
+        ctx.strokeStyle = "#3498db";
+        ctx.lineWidth = 2;
+
+        // X轴
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+
+        // Y轴
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, 0);
+        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // 更新矩阵显示
+      function updateMatrixDisplay() {
+        document.getElementById("a-value").textContent = matrix.a.toFixed(2);
+        document.getElementById("b-value").textContent = matrix.b.toFixed(2);
+        document.getElementById("c-value").textContent = matrix.c.toFixed(2);
+        document.getElementById("d-value").textContent = matrix.d.toFixed(2);
+        document.getElementById("e-value").textContent = matrix.e.toFixed(2);
+        document.getElementById("f-value").textContent = matrix.f.toFixed(2);
+      }
+
+      // 应用变换
+      function applyTransform() {
+        const tx = parseInt(document.getElementById("translateX").value);
+        const ty = parseInt(document.getElementById("translateY").value);
+        const sx = parseFloat(document.getElementById("scaleX").value) / 100;
+        const sy = parseFloat(document.getElementById("scaleY").value) / 100;
+
+        // 重置矩阵
+        matrix.identity();
+
+        // 应用变换（先缩放后平移）
+        matrix.scale(sx, sy).translate(tx, ty);
+
+        // 更新显示值
+        document.getElementById("translateX-value").textContent = tx;
+        document.getElementById("translateY-value").textContent = ty;
+        document.getElementById("scaleX-value").textContent = sx.toFixed(2);
+        document.getElementById("scaleY-value").textContent = sy.toFixed(2);
+
+        // 重绘
+        draw();
+      }
+
+      // 重置矩阵
+      function resetMatrix() {
+        matrix.identity();
+        document.getElementById("translateX").value = 0;
+        document.getElementById("translateY").value = 0;
+        document.getElementById("scaleX").value = 100;
+        document.getElementById("scaleY").value = 100;
+        applyTransform();
+      }
+
+      // 事件监听
+      document
+        .getElementById("translateX")
+        .addEventListener("input", applyTransform);
+      document
+        .getElementById("translateY")
+        .addEventListener("input", applyTransform);
+      document
+        .getElementById("scaleX")
+        .addEventListener("input", applyTransform);
+      document
+        .getElementById("scaleY")
+        .addEventListener("input", applyTransform);
+      document
+        .getElementById("reset-btn")
+        .addEventListener("click", resetMatrix);
+      document
+        .getElementById("apply-btn")
+        .addEventListener("click", applyTransform);
+
+      // 初始绘制
+      draw();
+    </script>
+  </body>
+</html>

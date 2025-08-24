@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Canvas 矩阵变换 - 移动和缩放</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #333;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1000px;
+        width: 100%;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        margin: 20px 0;
+      }
+      header {
+        background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+      }
+      .description {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .content {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 20px;
+        gap: 20px;
+      }
+      .canvas-container {
+        flex: 1;
+        min-width: 500px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      #canvas {
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        display: block;
+        margin: 0 auto;
+      }
+      .controls {
+        flex: 1;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .control-group {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      }
+      .control-group h3 {
+        color: #4b6cb7;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e9ecef;
+      }
+      .slider-container {
+        margin-bottom: 15px;
+      }
+      .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #495057;
+      }
+      input[type="range"] {
+        width: 100%;
+        height: 8px;
+        -webkit-appearance: none;
+        background: #e9ecef;
+        border-radius: 5px;
+        outline: none;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #4b6cb7;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      input[type="range"]::-webkit-slider-thumb:hover {
+        background: #3a5999;
+      }
+      .buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+      }
+      button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 6px;
+        background: #4b6cb7;
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      button:hover {
+        background: #3a5999;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .element-info {
+        background: #e9ecef;
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 14px;
+        margin-top: 15px;
+      }
+      .element-info h4 {
+        color: #4b6cb7;
+        margin-bottom: 8px;
+      }
+      .element-info div {
+        margin-bottom: 5px;
+      }
+      footer {
+        text-align: center;
+        color: white;
+        margin-top: 20px;
+        opacity: 0.8;
+      }
+      @media (max-width: 900px) {
+        .content {
+          flex-direction: column;
+        }
+        .canvas-container,
+        .controls {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Canvas 矩阵变换 - 移动和缩放</h1>
+        <p class="description">使用矩阵变换实现两个元素的独立移动和缩放效果</p>
+      </header>
+
+      <div class="content">
+        <div class="canvas-container">
+          <canvas id="canvas" width="500" height="400"></canvas>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <h3>红色矩形变换控制</h3>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>X轴平移</span>
+                <span id="rect1TranslateXValue">0</span>
+              </div>
+              <input
+                type="range"
+                id="rect1TranslateX"
+                min="-200"
+                max="200"
+                value="0"
+              />
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Y轴平移</span>
+                <span id="rect1TranslateYValue">0</span>
+              </div>
+              <input
+                type="range"
+                id="rect1TranslateY"
+                min="-200"
+                max="200"
+                value="0"
+              />
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>X轴缩放</span>
+                <span id="rect1ScaleXValue">1.0</span>
+              </div>
+              <input
+                type="range"
+                id="rect1ScaleX"
+                min="10"
+                max="200"
+                value="100"
+                step="5"
+              />
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Y轴缩放</span>
+                <span id="rect1ScaleYValue">1.0</span>
+              </div>
+              <input
+                type="range"
+                id="rect1ScaleY"
+                min="10"
+                max="200"
+                value="100"
+                step="5"
+              />
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h3>蓝色圆形变换控制</h3>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>X轴平移</span>
+                <span id="rect2TranslateXValue">0</span>
+              </div>
+              <input
+                type="range"
+                id="rect2TranslateX"
+                min="-200"
+                max="200"
+                value="0"
+              />
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Y轴平移</span>
+                <span id="rect2TranslateYValue">0</span>
+              </div>
+              <input
+                type="range"
+                id="rect2TranslateY"
+                min="-200"
+                max="200"
+                value="0"
+              />
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>X轴缩放</span>
+                <span id="rect2ScaleXValue">1.0</span>
+              </div>
+              <input
+                type="range"
+                id="rect2ScaleX"
+                min="10"
+                max="200"
+                value="100"
+                step="5"
+              />
+            </div>
+            <div class="slider-container">
+              <div class="slider-label">
+                <span>Y轴缩放</span>
+                <span id="rect2ScaleYValue">1.0</span>
+              </div>
+              <input
+                type="range"
+                id="rect2ScaleY"
+                min="10"
+                max="200"
+                value="100"
+                step="5"
+              />
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h3>全局控制</h3>
+            <div class="buttons">
+              <button id="resetBtn">重置变换</button>
+              <button id="randomBtn">随机变换</button>
+            </div>
+          </div>
+
+          <div class="element-info">
+            <h4>矩阵变换原理</h4>
+            <div>平移矩阵: [1, 0, 0, 1, tx, ty]</div>
+            <div>缩放矩阵: [sx, 0, 0, sy, 0, 0]</div>
+            <div>变换顺序: 先缩放后平移</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Canvas 矩阵变换示例 &copy; 2023</p>
+    </footer>
+
+    <script>
+      // 矩阵类
+      class Matrix {
+        constructor(a = 1, b = 0, c = 0, d = 1, e = 0, f = 0) {
+          this.a = a;
+          this.b = b;
+          this.c = c;
+          this.d = d;
+          this.e = e;
+          this.f = f;
+        }
+
+        // 单位矩阵
+        identity() {
+          this.a = 1;
+          this.b = 0;
+          this.c = 0;
+          this.d = 1;
+          this.e = 0;
+          this.f = 0;
+          return this;
+        }
+
+        // 平移
+        translate(tx, ty) {
+          // 平移矩阵是 [1, 0, 0, 1, tx, ty]
+          // 与当前矩阵相乘
+          this.multiply(new Matrix(1, 0, 0, 1, tx, ty));
+          return this;
+        }
+
+        // 缩放
+        scale(sx, sy) {
+          // 缩放矩阵是 [sx, 0, 0, sy, 0, 0]
+          // 与当前矩阵相乘
+          this.multiply(new Matrix(sx, 0, 0, sy, 0, 0));
+          return this;
+        }
+
+        // 矩阵乘法
+        multiply(matrix) {
+          const a = this.a;
+          const b = this.b;
+          const c = this.c;
+          const d = this.d;
+          const e = this.e;
+          const f = this.f;
+
+          this.a = a * matrix.a + c * matrix.b;
+          this.b = b * matrix.a + d * matrix.b;
+          this.c = a * matrix.c + c * matrix.d;
+          this.d = b * matrix.c + d * matrix.d;
+          this.e = a * matrix.e + c * matrix.f + e;
+          this.f = b * matrix.e + d * matrix.f + f;
+
+          return this;
+        }
+
+        // 应用到Canvas上下文
+        transformContext(ctx) {
+          ctx.transform(this.a, this.b, this.c, this.d, this.e, this.f);
+        }
+      }
+
+      // 元素类
+      class CanvasElement {
+        constructor(x, y, width, height, color, type = "rect") {
+          this.x = x;
+          this.y = y;
+          this.width = width;
+          this.height = height;
+          this.color = color;
+          this.type = type; // 'rect' 或 'circle'
+          this.matrix = new Matrix();
+        }
+
+        // 绘制元素
+        draw(ctx) {
+          ctx.save();
+
+          // 应用变换矩阵
+          this.matrix.transformContext(ctx);
+
+          // 设置样式
+          ctx.fillStyle = this.color;
+          ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+          ctx.lineWidth = 2;
+
+          // 绘制形状
+          if (this.type === "rect") {
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+          } else if (this.type === "circle") {
+            ctx.beginPath();
+            ctx.arc(
+              this.x + this.width / 2,
+              this.y + this.height / 2,
+              this.width / 2,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          // 绘制中心点
+          ctx.fillStyle = "yellow";
+          ctx.beginPath();
+          ctx.arc(
+            this.x + this.width / 2,
+            this.y + this.height / 2,
+            4,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        // 重置变换
+        resetTransform() {
+          this.matrix.identity();
+        }
+      }
+
+      // 初始化Canvas
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // 创建两个元素
+      const element1 = new CanvasElement(
+        -40,
+        -40,
+        80,
+        80,
+        "rgba(255, 100, 100, 0.7)",
+        "rect"
+      );
+      const element2 = new CanvasElement(
+        -30,
+        -30,
+        60,
+        60,
+        "rgba(100, 100, 255, 0.7)",
+        "circle"
+      );
+
+      // 绘制函数
+      function draw() {
+        // 清除画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 绘制背景网格
+        drawGrid();
+
+        // 绘制坐标轴
+        drawAxes();
+
+        // 绘制两个元素
+        element1.draw(ctx);
+        element2.draw(ctx);
+
+        // 绘制中心标记
+        drawCenterMark();
+      }
+
+      // 绘制背景网格
+      function drawGrid() {
+        ctx.save();
+        ctx.strokeStyle = "#e0e0e0";
+        ctx.lineWidth = 1;
+
+        // 绘制垂直线
+        for (let x = 50; x < canvas.width; x += 50) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+
+        // 绘制水平线
+        for (let y = 50; y < canvas.height; y += 50) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      // 绘制坐标轴
+      function drawAxes() {
+        ctx.save();
+        ctx.lineWidth = 2;
+
+        // X轴
+        ctx.strokeStyle = "#3498db";
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+
+        // Y轴
+        ctx.strokeStyle = "#e74c3c";
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, 0);
+        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // 绘制中心标记
+      function drawCenterMark() {
+        ctx.save();
+        ctx.fillStyle = "#2c3e50";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("原点 (0,0)", canvas.width / 2, canvas.height / 2 - 10);
+        ctx.restore();
+      }
+
+      // 更新变换
+      function updateTransforms() {
+        // 重置变换
+        element1.resetTransform();
+        element2.resetTransform();
+
+        // 获取控制值
+        const rect1Tx = parseInt(
+          document.getElementById("rect1TranslateX").value
+        );
+        const rect1Ty = parseInt(
+          document.getElementById("rect1TranslateY").value
+        );
+        const rect1Sx =
+          parseFloat(document.getElementById("rect1ScaleX").value) / 100;
+        const rect1Sy =
+          parseFloat(document.getElementById("rect1ScaleY").value) / 100;
+
+        const rect2Tx = parseInt(
+          document.getElementById("rect2TranslateX").value
+        );
+        const rect2Ty = parseInt(
+          document.getElementById("rect2TranslateY").value
+        );
+        const rect2Sx =
+          parseFloat(document.getElementById("rect2ScaleX").value) / 100;
+        const rect2Sy =
+          parseFloat(document.getElementById("rect2ScaleY").value) / 100;
+
+        // 应用变换到元素1（先缩放后平移）
+        element1.matrix
+          .translate(canvas.width / 4, canvas.height / 2)
+          .translate(rect1Tx, rect1Ty)
+          .scale(rect1Sx, rect1Sy);
+
+        // 应用变换到元素2（先缩放后平移）
+        element2.matrix
+          .translate((canvas.width * 3) / 4, canvas.height / 2)
+          .translate(rect2Tx, rect2Ty)
+          .scale(rect2Sx, rect2Sy);
+
+        // 重新绘制
+        draw();
+
+        // 更新值显示
+        document.getElementById("rect1TranslateXValue").textContent = rect1Tx;
+        document.getElementById("rect1TranslateYValue").textContent = rect1Ty;
+        document.getElementById("rect1ScaleXValue").textContent =
+          rect1Sx.toFixed(1);
+        document.getElementById("rect1ScaleYValue").textContent =
+          rect1Sy.toFixed(1);
+
+        document.getElementById("rect2TranslateXValue").textContent = rect2Tx;
+        document.getElementById("rect2TranslateYValue").textContent = rect2Ty;
+        document.getElementById("rect2ScaleXValue").textContent =
+          rect2Sx.toFixed(1);
+        document.getElementById("rect2ScaleYValue").textContent =
+          rect2Sy.toFixed(1);
+      }
+
+      // 设置事件监听器
+      document
+        .getElementById("rect1TranslateX")
+        .addEventListener("input", updateTransforms);
+      document
+        .getElementById("rect1TranslateY")
+        .addEventListener("input", updateTransforms);
+      document
+        .getElementById("rect1ScaleX")
+        .addEventListener("input", updateTransforms);
+      document
+        .getElementById("rect1ScaleY")
+        .addEventListener("input", updateTransforms);
+
+      document
+        .getElementById("rect2TranslateX")
+        .addEventListener("input", updateTransforms);
+      document
+        .getElementById("rect2TranslateY")
+        .addEventListener("input", updateTransforms);
+      document
+        .getElementById("rect2ScaleX")
+        .addEventListener("input", updateTransforms);
+      document
+        .getElementById("rect2ScaleY")
+        .addEventListener("input", updateTransforms);
+
+      // 重置按钮
+      document
+        .getElementById("resetBtn")
+        .addEventListener("click", function () {
+          document.getElementById("rect1TranslateX").value = 0;
+          document.getElementById("rect1TranslateY").value = 0;
+          document.getElementById("rect1ScaleX").value = 100;
+          document.getElementById("rect1ScaleY").value = 100;
+
+          document.getElementById("rect2TranslateX").value = 0;
+          document.getElementById("rect2TranslateY").value = 0;
+          document.getElementById("rect2ScaleX").value = 100;
+          document.getElementById("rect2ScaleY").value = 100;
+
+          updateTransforms();
+        });
+
+      // 随机变换按钮
+      document
+        .getElementById("randomBtn")
+        .addEventListener("click", function () {
+          document.getElementById("rect1TranslateX").value = Math.floor(
+            Math.random() * 400 - 200
+          );
+          document.getElementById("rect1TranslateY").value = Math.floor(
+            Math.random() * 400 - 200
+          );
+          document.getElementById("rect1ScaleX").value = Math.floor(
+            Math.random() * 190 + 10
+          );
+          document.getElementById("rect1ScaleY").value = Math.floor(
+            Math.random() * 190 + 10
+          );
+
+          document.getElementById("rect2TranslateX").value = Math.floor(
+            Math.random() * 400 - 200
+          );
+          document.getElementById("rect2TranslateY").value = Math.floor(
+            Math.random() * 400 - 200
+          );
+          document.getElementById("rect2ScaleX").value = Math.floor(
+            Math.random() * 190 + 10
+          );
+          document.getElementById("rect2ScaleY").value = Math.floor(
+            Math.random() * 190 + 10
+          );
+
+          updateTransforms();
+        });
+
+      // 初始绘制
+      updateTransforms();
+    </script>
+  </body>
+</html>
